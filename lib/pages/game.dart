@@ -8,12 +8,13 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   int _days = 25;
+  double _progressPercentage = 0.7;
   String _countDown = DateFormat('kk:mm:ss')
       .format(DateTime.now()); // DateTime.now just for a time example
 
   @override
   Widget build(BuildContext context) {
-    Widget shareButton = new IconButton(
+    Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
@@ -22,7 +23,7 @@ class _GamePageState extends State<GamePage> {
       },
     );
 
-    Widget numberOfDays = new Stack(
+    Widget numberOfDays = Stack(
       children: <Widget>[
         Text(
           '$_days',
@@ -30,7 +31,7 @@ class _GamePageState extends State<GamePage> {
         ),
         Positioned(
           right: 0,
-          bottom: 10,
+          bottom: 5,
           child: Text(
             'Days', // TODO: exception for 1 day
             style: Theme.of(context).textTheme.body2,
@@ -39,12 +40,30 @@ class _GamePageState extends State<GamePage> {
       ],
     );
 
-    Widget countDown = new Text(
-      '$_countDown',
-      style: Theme.of(context).textTheme.display2,
+    Widget countDownFinal = Stack(
+      children: <Widget>[
+        SizedBox(
+          child: CircularProgressIndicator(
+            strokeWidth: 10.0,
+            backgroundColor: Colors.transparent,
+            value: _progressPercentage,
+          ),
+          height: 150.0,
+          width: 150.0,
+        ),
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              '$_countDown',
+              style: Theme.of(context).textTheme.display1,
+            ),
+          ),
+        ),
+      ],
     );
 
-    Widget mainButton = new RaisedButton(
+    Widget mainButton = RaisedButton(
         color: Theme.of(context).primaryColor,
 //        textColor: Theme.of(context).textTheme.button.color,
         splashColor: Colors.cyanAccent,
@@ -68,8 +87,8 @@ class _GamePageState extends State<GamePage> {
         ),
         numberOfDays,
         SizedBox(height: 20),
-        countDown,
-        SizedBox(height: 30),
+        countDownFinal,
+        SizedBox(height: 50),
         mainButton,
       ],
     );
