@@ -1,5 +1,7 @@
-import 'package:button_app/secondary.dart';
 import 'package:flutter/material.dart';
+import 'package:button_app/pages/game.dart';
+import 'package:button_app/pages/leaderboards.dart';
+import 'package:button_app/pages/shop.dart';
 
 void main() => runApp(MyApp());
 
@@ -9,7 +11,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Button App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.cyan,
+        primaryColor: Colors.cyan,
+        textTheme: TextTheme(
+            title: TextStyle(color: Colors.white),
+            body2: TextStyle(color: Colors.grey[700]),
+            display1: TextStyle(color: Colors.grey[700]),
+            display4:
+                TextStyle(color: Colors.cyan, fontWeight: FontWeight.w400),
+            caption: TextStyle(color: Colors.grey[700]),
+            button: TextStyle(color: Colors.white)),
+        iconTheme: IconThemeData(color: Colors.grey[700]),
       ),
       home: MyHomePage(title: 'The Button App'),
     );
@@ -35,77 +47,56 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  int _navigationIndex = 0;
 
-  void _incrementCounter() {
+  void _onNavigationBarItemTapped(int index) {
     setState(() {
-      _counter++;
+      _navigationIndex = index;
     });
+  }
+
+  Widget callPage(int navigationIndex) {
+    switch (navigationIndex) {
+      case 0:
+        return GamePage();
+      case 1:
+        return LeaderboardsPage();
+      case 2:
+        return ShopPage();
+
+        break;
+      default:
+        return GamePage();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(widget.title, style: Theme.of(context).textTheme.title),
       ),
-      body: Center(
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-            RaisedButton(
-              color: Colors.blue,
-              textColor: Colors.white,
-              disabledColor: Colors.grey,
-              disabledTextColor: Colors.black,
-              padding: EdgeInsets.all(8.0),
-              splashColor: Colors.blueAccent,
-              child: Text(
-                'Second Page',
-                style: TextStyle(fontSize: 20.0),
-              ),
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => SecondPage()));
-              },
-            ),
-          ],
-        ),
+      body: callPage(_navigationIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.radio_button_checked),
+            title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.keyboard_arrow_up),
+            title: Text('Leaderboards'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            title: Text('Shop'),
+          ),
+        ],
+        currentIndex: _navigationIndex,
+        onTap: _onNavigationBarItemTapped,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

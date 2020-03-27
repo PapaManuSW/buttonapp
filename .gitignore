@@ -39,3 +39,7 @@ lib/generated_plugin_registrant.dart
 # Firebase Key
 google-services.json
 GoogleService-Info.plist
+
+# generated files
+bin/
+gen/
