@@ -1,6 +1,13 @@
+import 'dart:async';
+
+import 'package:button_app/secondary.dart';
+import 'package:button_app/utils/firebaseUtils.dart';
+import 'package:button_app/utils/misc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:button_app/secondary.dart';
+
+const String COLLECTION = 'labels_collection';
 
 class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
@@ -9,8 +16,51 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   int _days = 25;
   double _progressPercentage = 0.7;
-  String _countDown = DateFormat('kk:mm:ss')
-      .format(DateTime.now()); // DateTime.now just for a time example
+  DateTime _countDown = DateTime.now();
+  Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _initScheduledTask();
+    initFirestoreStreamFor(COLLECTION, _onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  _onDataChanged(QuerySnapshot data) {
+    _setCountDown(data);
+    _setPercentage();
+    _setDayCounter(data);
+  }
+
+  void _initScheduledTask() {
+    // TODO just to see it moving set to 1 second
+    _timer =
+        Timer.periodic(Duration(seconds: 1), (Timer t) => _setPercentage());
+  }
+
+  void _setDayCounter(QuerySnapshot data) {
+    setState(() {
+      _days = data.documents.elementAt(1).data['numberOfHit'];
+    });
+  }
+
+  void _setCountDown(QuerySnapshot data) {
+    setState(() {
+      _countDown = data.documents.elementAt(1).data['timestamp'].toDate();
+    });
+  }
+
+  void _setPercentage() {
+    setState(() {
+      _progressPercentage = computePercentage(_countDown);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +105,7 @@ class _GamePageState extends State<GamePage> {
           child: Align(
             alignment: Alignment.center,
             child: Text(
-              '$_countDown',
+              DateFormat('kk:mm:ss').format(_countDown),
               style: Theme.of(context).textTheme.display1,
             ),
           ),
@@ -71,8 +121,15 @@ class _GamePageState extends State<GamePage> {
           'Button',
           style: Theme.of(context).textTheme.button,
         ),
+        onLongPress: () {
+          updateTimeStamp(
+              COLLECTION,
+              'test_label2',
+              Timestamp.fromDate(
+                  DateTime.now().add(new Duration(seconds: 50))));
+        },
         onPressed: () {
-          // TODO: some functionality
+          verifyPressOnTime(_countDown);
         });
 
     return Column(
