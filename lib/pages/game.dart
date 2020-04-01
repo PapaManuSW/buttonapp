@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:button_app/secondary.dart';
+import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
+import 'package:button_app/utils/localNotification.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -14,16 +16,23 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
+  // TODO fix initial values
   int _days = 25;
   double _progressPercentage = 0.7;
   DateTime _countDown = DateTime.now();
   Timer _timer;
+  int id = 0;
 
   @override
   void initState() {
     super.initState();
+    new FirebaseNotifications().setUpFirebase();
     _initScheduledTask();
     initFirestoreStreamFor(COLLECTION, _onDataChanged);
+    initializeNotification();
+    getCurrentTime().then((time) {
+      print(time.toIso8601String());
+    });
   }
 
   @override
@@ -41,24 +50,26 @@ class _GamePageState extends State<GamePage> {
   void _initScheduledTask() {
     // TODO just to see it moving set to 1 second
     _timer =
-        Timer.periodic(Duration(seconds: 1), (Timer t) => _setPercentage());
+        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
   }
 
   void _setDayCounter(QuerySnapshot data) {
     setState(() {
-      _days = data.documents.elementAt(1).data['numberOfHit'];
+      _days = data.documents.elementAt(0).data['numberOfHit'];
     });
   }
 
   void _setCountDown(QuerySnapshot data) {
+    var countdown = data.documents.elementAt(0).data['timestamp'].toDate();
     setState(() {
-      _countDown = data.documents.elementAt(1).data['timestamp'].toDate();
+      _countDown = countdown;
     });
   }
 
-  void _setPercentage() {
+  Future<void> _setPercentage() async {
+    var percentage = await computePercentage(_countDown);
     setState(() {
-      _progressPercentage = computePercentage(_countDown);
+      _progressPercentage = percentage;
     });
   }
 
@@ -122,14 +133,17 @@ class _GamePageState extends State<GamePage> {
           style: Theme.of(context).textTheme.button,
         ),
         onLongPress: () {
-          updateTimeStamp(
-              COLLECTION,
-              'test_label2',
-              Timestamp.fromDate(
-                  DateTime.now().add(new Duration(seconds: 50))));
+          getCurrentTime().then((now) {
+            updateTimeStamp(COLLECTION, 'test_label1',
+                Timestamp.fromDate(now.add(new Duration(days: 1))));
+          });
         },
         onPressed: () {
           verifyPressOnTime(_countDown);
+//          scheduleNotification(
+//              id++, _countDown.subtract(new Duration(hours: 1)));
+//          scheduleNotification(
+//              id++, _countDown.subtract(new Duration(minutes: 15)));
         });
 
     return Column(
