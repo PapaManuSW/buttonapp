@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Google Play game services IDs.
+Save this file as res/values/games-id.xml in your project.
+-->
+<resources>
+    <!-- app_id -->
+    <string name="app_id" translatable="false">709640345108</string>
+    <!-- package_name -->
+    <string name="package_name" translatable="false">com.papamanu.button_app</string>
+    <!-- achievement testAchievement -->
+    <string name="achievement_testachievement" translatable="false">CgkIlKzxztMUEAIQAg</string>
+</resources>
