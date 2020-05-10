@@ -44,11 +44,12 @@ class _SignInState extends State<SignIn> {
                 color: Colors.blue[500],
                 child: Text('Sign in', style: TextStyle(color:Colors.white),),
                 onPressed: () {
-                  print('email');
-                  print(email);
-                  print('password');
-                  print(password);
-                  _authService.signInEmail(email, password);
+//                  print('email');
+//                  print(email);
+//                  print('password');
+//                  print(password);
+//                  _authService.signInEmail(email, password);
+                  _authService.signInWithGoogle();
                 },
               )
             ],
