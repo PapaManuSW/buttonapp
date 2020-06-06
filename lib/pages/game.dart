@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:button_app/deprecated/localNotification.dart';
 import 'package:button_app/secondary.dart';
 import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/localNotification.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -22,6 +24,8 @@ class _GamePageState extends State<GamePage> {
   DateTime _countDown = DateTime.now();
   Timer _timer;
   int id = 0;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  String _message = '';
 
   @override
   void initState() {

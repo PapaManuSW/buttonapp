@@ -10,6 +10,22 @@ class FirebaseNotifications {
     firebaseCloudMessaging_Listeners();
   }
 
+  void onTokenRefresh() {
+    _firebaseMessaging.onTokenRefresh.forEach((newToken) {
+      print("Token refreshed: $newToken");
+      // TODO implement below
+      sendTokenToServer(newToken);
+    });
+  }
+
+  void onTokenRefresh2() {
+    _firebaseMessaging.onTokenRefresh.single.then((newToken) {
+      print("Token refreshed2: $newToken");
+      // TODO implement below
+      sendTokenToServer(newToken);
+    });
+  }
+
   void firebaseCloudMessaging_Listeners() {
     if (Platform.isIOS) iOS_Permission();
 
@@ -38,4 +54,6 @@ class FirebaseNotifications {
       print("Settings registered: $settings");
     });
   }
+
+  void sendTokenToServer(String newToken) {}
 }
