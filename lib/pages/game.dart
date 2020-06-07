@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:button_app/deprecated/localNotification.dart';
 import 'package:button_app/secondary.dart';
 import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
