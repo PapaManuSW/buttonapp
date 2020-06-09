@@ -1,5 +1,6 @@
 import 'package:button_app/models/user.dart';
 import 'package:button_app/pages/home.dart';
+import 'package:button_app/pages/signin.dart';
 import 'package:button_app/services/auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,6 @@ class MainPage extends StatelessWidget {
     final user = Provider.of<User>(context);
     print('In MainPage');
     print(user);
-//    return (user == null) ? SignIn() : Home(title: 'The Button App');
-    return Home(title: 'The Button App');
+    return (user == null) ? SignIn() : Home(title: 'The Button App');
   }
 }
