@@ -1,29 +1,39 @@
 import 'dart:async';
 
 import 'package:button_app/secondary.dart';
+import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-const String COLLECTION = 'labels_collection';
+const String COLLECTION = 'users';
+const String USER = 'ale'; //TODO use user model and get it from sign-in
+const NEXT_CLICK_AT = 'nextClickAt';
+const NUMBER_OF_HITS = 'numberOfHit';
 
 class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
 }
 
 class _GamePageState extends State<GamePage> {
+  // TODO fix initial values
   int _days = 25;
   double _progressPercentage = 0.7;
   DateTime _countDown = DateTime.now();
   Timer _timer;
+  int id = 0;
 
   @override
   void initState() {
     super.initState();
+    new FirebaseNotifications().setUpFirebase();
     _initScheduledTask();
-    initFirestoreStreamFor(COLLECTION, _onDataChanged);
+    initFirestoreStreamForUser(COLLECTION, _onDataChanged, USER);
+    getCurrentTime().then((time) {
+      print(time.toIso8601String());
+    });
   }
 
   @override
@@ -32,7 +42,7 @@ class _GamePageState extends State<GamePage> {
     super.dispose();
   }
 
-  _onDataChanged(QuerySnapshot data) {
+  _onDataChanged(DocumentSnapshot data) {
     _setCountDown(data);
     _setPercentage();
     _setDayCounter(data);
@@ -41,24 +51,26 @@ class _GamePageState extends State<GamePage> {
   void _initScheduledTask() {
     // TODO just to see it moving set to 1 second
     _timer =
-        Timer.periodic(Duration(seconds: 1), (Timer t) => _setPercentage());
+        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
   }
 
-  void _setDayCounter(QuerySnapshot data) {
+  void _setDayCounter(DocumentSnapshot data) {
     setState(() {
-      _days = data.documents.elementAt(1).data['numberOfHit'];
+      _days = data[NUMBER_OF_HITS];
     });
   }
 
-  void _setCountDown(QuerySnapshot data) {
+  void _setCountDown(DocumentSnapshot data) {
+    var countdown = data[NEXT_CLICK_AT].toDate();
     setState(() {
-      _countDown = data.documents.elementAt(1).data['timestamp'].toDate();
+      _countDown = countdown;
     });
   }
 
-  void _setPercentage() {
+  Future<void> _setPercentage() async {
+    var percentage = await computePercentage(_countDown);
     setState(() {
-      _progressPercentage = computePercentage(_countDown);
+      _progressPercentage = percentage;
     });
   }
 
@@ -122,14 +134,28 @@ class _GamePageState extends State<GamePage> {
           style: Theme.of(context).textTheme.button,
         ),
         onLongPress: () {
-          updateTimeStamp(
-              COLLECTION,
-              'test_label2',
-              Timestamp.fromDate(
-                  DateTime.now().add(new Duration(seconds: 50))));
+          //TODO Just for testing
+          getCurrentTime().then((now) {
+            updateTimeStamp(
+                COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
+          });
         },
         onPressed: () {
-          verifyPressOnTime(_countDown);
+          verifyPressOnTime(_countDown).then((pressedOnTime) {
+            if (pressedOnTime) {
+              incrementHitCounter(COLLECTION, USER);
+              getCurrentTime().then((now) {
+                updateTimeStamp(
+                    COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
+              });
+            } else {
+              resetHitCounter(COLLECTION, USER);
+            }
+          });
+//          scheduleNotification(
+//              id++, _countDown.subtract(new Duration(hours: 1)));
+//          scheduleNotification(
+//              id++, _countDown.subtract(new Duration(minutes: 15)));
         });
 
     return Column(

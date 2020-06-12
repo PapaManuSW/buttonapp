@@ -1,31 +1,35 @@
-import 'package:button_app/utils/firebaseUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ntp/ntp.dart';
 
-const int _nextTimeAbsoluteValueInSeconds = 50;
+const int _nextTimeAbsoluteValueInMinutes = 60 * 24;
 
-double computePercentage(DateTime lastTimestampOnServer) {
-  DateTime now = Timestamp.now().toDate();
-  int differenceInSeconds = lastTimestampOnServer.difference(now).inSeconds;
-  return differenceInSeconds / _nextTimeAbsoluteValueInSeconds;
+DateTime nextTimeToPress(DateTime now) {
+  return now.add(new Duration(minutes: _nextTimeAbsoluteValueInMinutes));
 }
 
-verifyPressOnTime(DateTime countDown) {
-  DateTime now = Timestamp.now().toDate();
-  const int slack = 40; //seconds
-  var differenceInSeconds = countDown.difference(now).inSeconds;
-  if (differenceInSeconds > slack) {
-    print("Too early: " + differenceInSeconds.toString());
-    resetHitCounter('labels_collection', 'test_label2');
-  } else if (differenceInSeconds < -slack) {
-    print("Too late: " + differenceInSeconds.toString());
-    resetHitCounter('labels_collection', 'test_label2');
+Future<double> computePercentage(DateTime lastTimestampOnServer) async {
+  DateTime now = await getCurrentTime();
+  int differenceInMinutes = lastTimestampOnServer.difference(now).inMinutes;
+  return differenceInMinutes / _nextTimeAbsoluteValueInMinutes;
+}
+
+Future<DateTime> getCurrentTime() async {
+  return NTP.now(); // Internet based
+  // return Timestamp.now();
+  // return DateTime.now();
+}
+
+Future<bool> verifyPressOnTime(DateTime countDown) async {
+  DateTime now = await getCurrentTime();
+  const int slack = 60; //minutes
+  var differenceInMinutes = countDown.difference(now).inMinutes;
+  if (differenceInMinutes > slack) {
+    print("Too early: " + differenceInMinutes.toString());
+    return false;
+  } else if (differenceInMinutes < -slack) {
+    print("Too late: " + differenceInMinutes.toString());
+    return false;
   } else {
-    incrementHitCounter('labels_collection', 'test_label2');
-    updateTimeStamp(
-        'labels_collection',
-        'test_label2',
-        Timestamp.fromDate(DateTime.now()
-            .add(new Duration(seconds: _nextTimeAbsoluteValueInSeconds))));
     print("On time!!!");
+    return true;
   }
 }

@@ -12,34 +12,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamProvider<User>.value(
-      value: AuthService().user,
-      child: MaterialApp(
-        title: 'Button App',
-        theme: ThemeData(
-          primaryColor: Color(0xFF01A39D),
-          accentColor: Colors.grey[700],
-          textTheme: TextTheme(
-              title: TextStyle(color: Colors.white),
-              body2: TextStyle(color: Colors.grey[700]),
-              display1: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 29.0,
-                  fontWeight: FontWeight.w400),
-              display4: TextStyle(
-                  color: Color(0xFF01A39D),
-                  fontWeight: FontWeight.w400,
-                  fontSize: 90.0),
-              caption: TextStyle(color: Colors.grey[700]),
-              button: TextStyle(color: Colors.white)),
-          iconTheme: IconThemeData(color: Colors.grey[700]),
-        ),
-        home: MainPage(),
+        value: AuthService().user,
+        child: MaterialApp(
+          title: 'Button App',
+          theme: ThemeData(
+            primaryColor: Color(0xFF01A39D),
+            accentColor: Colors.grey[700],
+            textTheme: TextTheme(
+                title: TextStyle(color: Colors.white),
+                body2: TextStyle(color: Colors.grey[700]),
+                display1: TextStyle(
+                    color: Colors.grey[700],
+                    fontSize: 29.0,
+                    fontWeight: FontWeight.w400),
+                display4: TextStyle(
+                    color: Color(0xFF01A39D),
+                    fontWeight: FontWeight.w400,
+                    fontSize: 90.0),
+                caption: TextStyle(color: Colors.grey[700]),
+                button: TextStyle(color: Colors.white)),
+            iconTheme: IconThemeData(color: Colors.grey[700]),
+          ),
+          home: MainPage(),
 //      home: MyHomePage(title: 'The Button App'),
-      )
-    );
+        ));
   }
 }
-
 
 class MainPage extends StatelessWidget {
   @override
@@ -49,5 +47,4 @@ class MainPage extends StatelessWidget {
     print(user);
     return (user == null) ? SignIn() : Home(title: 'The Button App');
   }
-
 }
