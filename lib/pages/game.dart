@@ -1,16 +1,17 @@
 import 'dart:async';
 
+import 'package:button_app/models/user.dart';
 import 'package:button_app/secondary.dart';
+import 'package:button_app/services/auth.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-const String COLLECTION = 'users';
-const String USER = 'ale'; //TODO use user model and get it from sign-in
 const NEXT_CLICK_AT = 'nextClickAt';
-const NUMBER_OF_HITS = 'numberOfHit';
+const STREAK = 'streak';
 
 class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
@@ -28,10 +29,6 @@ class _GamePageState extends State<GamePage> {
   void initState() {
     super.initState();
     _initScheduledTask();
-    initFirestoreStreamForUser(COLLECTION, _onDataChanged, USER);
-    getCurrentTime().then((time) {
-      print(time.toIso8601String());
-    });
   }
 
   @override
@@ -74,6 +71,9 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
+    var model = Provider.of<User>(context);
+    // TODO can model be null at this point? e.g. the provider did not received values yet?
+    initFirestoreStreamForUser(model.uuid, _onDataChanged);
     Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
@@ -146,6 +146,7 @@ class _GamePageState extends State<GamePage> {
                 updateTimeStamp(
                     COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
               });
+              scheduleNotificationForUser(userId);
             } else {
               resetHitCounter(COLLECTION, USER);
             }
