@@ -34,7 +34,6 @@ class MyApp extends StatelessWidget {
             iconTheme: IconThemeData(color: Colors.grey[700]),
           ),
           home: MainPage(),
-//      home: MyHomePage(title: 'The Button App'),
         ));
   }
 }
@@ -43,9 +42,6 @@ class MainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User>(context);
-    print('In MainPage');
-    print(user);
     return (user == null) ? SignIn() : Home(title: 'The Button App');
-//    return Home(title: 'The Button App');
   }
 }
