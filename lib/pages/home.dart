@@ -44,7 +44,7 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title, style: Theme.of(context).textTheme.title),
+        title: Text(widget.title, style: Theme.of(context).textTheme.headline6),
         actions: <Widget>[
           FlatButton.icon(
               onPressed: () async {
@@ -52,10 +52,10 @@ class _HomeState extends State<Home> {
               },
               icon: Icon(Icons.person),
               label: Text('Logout')),
-          FlatButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.settings),
-              label: Text('Settings'))
+//          FlatButton.icon(
+//              onPressed: () {},
+//              icon: Icon(Icons.settings),
+//              label: Text('Settings'))
         ],
       ),
       body: callPage(_navigationIndex),

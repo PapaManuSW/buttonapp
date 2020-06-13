@@ -10,12 +10,18 @@ class User {
 
 class UserData {
   final String email;
-  final String name;
-  final int
-      notificationInterval; //every how many seconds to send a notification
-  final String registrationToken; //for sending notifications
-  UserData(
-      this.email, this.name, this.notificationInterval, this.registrationToken);
+  final int notificationInterval;
+  final String registrationToken;
+
+  UserData(this.email, this.notificationInterval, this.registrationToken);
+
+  get map {
+    return {
+      'email': email,
+      'notificationInterval': notificationInterval,
+      'registrationToken': registrationToken
+    };
+  }
 }
 
 class GameData {
@@ -23,5 +29,13 @@ class GameData {
   final Timestamp nextClickAt;
   final int longestStreak;
 
-  GameData(this.streak, this.nextClickAt, this.longestStreak);
+  GameData(this.streak, this.longestStreak, this.nextClickAt);
+
+  get map {
+    return {
+      'streak': streak,
+      'longestStreak': longestStreak,
+      'nextClickAt': nextClickAt.toString()
+    };
+  }
 }

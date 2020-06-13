@@ -89,14 +89,14 @@ class _GamePageState extends State<GamePage> {
       children: <Widget>[
         Text(
           '$_days',
-          style: Theme.of(context).textTheme.display4,
+          style: Theme.of(context).textTheme.headline1,
         ),
         Positioned(
           right: 0,
           bottom: 5,
           child: Text(
             'Days', // TODO: exception for 1 day
-            style: Theme.of(context).textTheme.body2,
+            style: Theme.of(context).textTheme.bodyText1,
           ),
         ),
       ],
@@ -118,7 +118,7 @@ class _GamePageState extends State<GamePage> {
             alignment: Alignment.center,
             child: Text(
               DateFormat('kk:mm:ss').format(_countDown),
-              style: Theme.of(context).textTheme.display1,
+              style: Theme.of(context).textTheme.headline4,
             ),
           ),
         ),
