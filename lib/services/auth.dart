@@ -1,12 +1,15 @@
 import 'package:button_app/models/user.dart';
 import 'package:button_app/services/database.dart';
+import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _authInstance = FirebaseAuth.instance;
-  final GoogleSignIn _googleInstance = GoogleSignIn(signInOption: SignInOption.games, scopes: ['email']);
+  final GoogleSignIn _googleInstance =
+      GoogleSignIn(signInOption: SignInOption.games, scopes: ['email']);
   final DatabaseService _db = DatabaseService();
+  final FirebaseNotifications firebaseNotifications = FirebaseNotifications();
 
   Future signInWithGoogle() async {
     if (await _googleInstance.isSignedIn()) {
@@ -14,19 +17,22 @@ class AuthService {
       print('already signed in');
     }
 
-    final GoogleSignInAccount googleSignInAccount = await _googleInstance.signIn();
+    final GoogleSignInAccount googleSignInAccount =
+        await _googleInstance.signIn();
     print(googleSignInAccount.toString());
 
-    final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+    final GoogleSignInAuthentication googleSignInAuthentication =
+        await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleSignInAuthentication.accessToken,
       idToken: googleSignInAuthentication.idToken,
     );
 
-    final AuthResult _authResult = await _authInstance.signInWithCredential(credential);
+    final AuthResult _authResult =
+        await _authInstance.signInWithCredential(credential);
     final FirebaseUser _authUser = _authResult.user;
-    User _user =  _getUserFromFireStore(_authUser);
+    User _user = _getUserFromFireStore(_authUser);
     await _db.updateUser(_user);
   }
 
@@ -34,7 +40,7 @@ class AuthService {
     if (_user == null) {
       return null;
     }
-    UserData userData = UserData(_user.email, 24, 'TOKEN');
+    UserData userData = UserData(_user.email, 24, firebaseNotifications.token);
     GameData gameData = GameData(0, 0, null);
     User user = User(_user.uid, userData, gameData);
     return user;
@@ -44,18 +50,18 @@ class AuthService {
     return _authInstance.onAuthStateChanged.map(_getUserFromFireStore);
   }
 
-  Future signInEmail(String email, String password) async {
-    try {
-      AuthResult result = await _authInstance.signInWithEmailAndPassword(email: email, password: password);
-      FirebaseUser firebaseUser = result.user;
-      User user = _getUserFromFireStore(firebaseUser);
-
-      return user;
-    } catch (e) {
-      print(e.toString());
-      return null;
-    }
-  }
+  //Future signInEmail(String email, String password) async {
+  //  try {
+  //    AuthResult result = await _authInstance.signInWithEmailAndPassword(email: email, password: password);
+  //    FirebaseUser firebaseUser = result.user;
+  //    User user = _getUserFromFireStore(firebaseUser);
+//
+  //    return user;
+  //  } catch (e) {
+  //    print(e.toString());
+  //    return null;
+  //  }
+  //}
 
   Future signOut() async {
     try {

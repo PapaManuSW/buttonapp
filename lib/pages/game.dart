@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:button_app/secondary.dart';
-import 'package:button_app/utils/firebaseNotifications.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,7 +27,6 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    new FirebaseNotifications().setUpFirebase();
     _initScheduledTask();
     initFirestoreStreamForUser(COLLECTION, _onDataChanged, USER);
     getCurrentTime().then((time) {

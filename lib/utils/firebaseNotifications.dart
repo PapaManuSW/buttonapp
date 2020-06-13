@@ -4,9 +4,24 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 class FirebaseNotifications {
   FirebaseMessaging _firebaseMessaging;
+  static FirebaseNotifications _instance;
+  String _token;
 
-  void setUpFirebase() {
+  FirebaseNotifications._createInstance();
+
+  factory FirebaseNotifications() {
+    if (_instance == null) {
+      _instance = FirebaseNotifications._createInstance();
+      _instance._setUpFirebase();
+    }
+    return _instance;
+  }
+
+  String get token => _token;
+
+  Future<void> _setUpFirebase() async {
     _firebaseMessaging = FirebaseMessaging();
+    _token = await _firebaseMessaging.getToken();
     firebaseCloudMessaging_Listeners();
   }
 
