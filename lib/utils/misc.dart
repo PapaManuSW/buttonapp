@@ -22,7 +22,6 @@ Future<bool> verifyPressOnTime(DateTime countDown) async {
   DateTime now = await getCurrentTime();
   const int slack = 60; //minutes
   var differenceInMinutes = countDown.difference(now).inMinutes;
-  return true;
   if (differenceInMinutes > slack) {
     print("Too early: " + differenceInMinutes.toString());
     return false;

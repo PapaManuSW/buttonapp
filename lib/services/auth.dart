@@ -7,30 +7,26 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _authInstance = FirebaseAuth.instance;
-  final GoogleSignIn _googleInstance =
-      GoogleSignIn(signInOption: SignInOption.games, scopes: ['email']);
+  final GoogleSignIn _googleInstance = GoogleSignIn(signInOption: SignInOption.games, scopes: ['email']);
   final DatabaseService _db = DatabaseService();
   final FirebaseNotifications firebaseNotifications = FirebaseNotifications();
 
   Future signInWithGoogle() async {
+    print("NOW IS");
     if (await _googleInstance.isSignedIn()) {
-//      await _googleInstance.signOut();
-      print('already signed in');
+      print('Already signed in');
     }
-    final GoogleSignInAccount googleSignInAccount =
-        await _googleInstance.signIn();
+    final GoogleSignInAccount googleSignInAccount = await _googleInstance.signIn();
     print(googleSignInAccount.toString());
 
-    final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
+    final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleSignInAuthentication.accessToken,
       idToken: googleSignInAuthentication.idToken,
     );
 
-    final AuthResult _authResult =
-        await _authInstance.signInWithCredential(credential);
+    final AuthResult _authResult = await _authInstance.signInWithCredential(credential);
     final FirebaseUser _authUser = _authResult.user;
     User _user = _getUserFromFireStore(_authUser);
     await _db.updateUser(_user);
@@ -40,9 +36,8 @@ class AuthService {
     if (_user == null) {
       return null;
     }
-    UserData userData = UserData(_user.email, 24, firebaseNotifications.token);
-    GameData gameData = GameData(
-        0, 0, Timestamp.fromDate(DateTime.now().add(Duration(days: 1))));
+    UserData userData = UserData(_user.email, 86400, firebaseNotifications.token); //86400 = 23h30m
+    GameData gameData = GameData(0, 0, Timestamp.now()); // TODO get this from ntp
     User user = User(_user.uid, userData, gameData);
     return user;
   }
