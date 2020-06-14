@@ -1,6 +1,7 @@
 import 'package:button_app/models/user.dart';
 import 'package:button_app/services/database.dart';
 import 'package:button_app/utils/firebaseNotifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -16,7 +17,6 @@ class AuthService {
 //      await _googleInstance.signOut();
       print('already signed in');
     }
-
     final GoogleSignInAccount googleSignInAccount =
         await _googleInstance.signIn();
     print(googleSignInAccount.toString());
@@ -41,7 +41,8 @@ class AuthService {
       return null;
     }
     UserData userData = UserData(_user.email, 24, firebaseNotifications.token);
-    GameData gameData = GameData(0, 0, null);
+    GameData gameData = GameData(
+        0, 0, Timestamp.fromDate(DateTime.now().add(Duration(days: 1))));
     User user = User(_user.uid, userData, gameData);
     return user;
   }

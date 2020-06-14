@@ -1,10 +1,15 @@
 import 'dart:convert';
 
+import 'package:button_app/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
-initFirestoreStreamForUser(String userId, Function onDataChanged) {
-  Firestore.instance.collection(userId).snapshots().listen((data) {
+initFirestoreGameDataStreamForUser(String userId, Function onDataChanged) {
+  Firestore.instance
+      .collection(userId)
+      .document(DatabaseService.gameData)
+      .snapshots()
+      .listen((data) {
     onDataChanged(data);
     return;
   });
@@ -23,6 +28,7 @@ initFirestoreStreamForUser(String userId, Function onDataChanged) {
 //}
 
 Future<http.Response> scheduleNotificationForUser(String userId) {
+  print("Scheduling notification");
   return http.post(
     'https://europe-west1-api-5485359515497309438-439551.cloudfunctions.net/scheduleTaskToSendNotification',
     headers: <String, String>{

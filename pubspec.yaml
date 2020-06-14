@@ -26,8 +26,7 @@ dependencies:
   google_sign_in: ^4.5.1
   http:
   intl: ^0.16.1
-  ntp: ^1.0.6
-
+  ntp: ^1.0.5
   flutter:
     sdk: flutter
 

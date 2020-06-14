@@ -35,7 +35,7 @@ class GameData {
     return {
       'streak': streak,
       'longestStreak': longestStreak,
-      'nextClickAt': nextClickAt.toString()
+      'nextClickAt': nextClickAt
     };
   }
 }

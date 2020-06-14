@@ -46,17 +46,18 @@ class _GamePageState extends State<GamePage> {
 
   void _initScheduledTask() {
     // TODO just to see it moving set to 1 second
-    _timer = Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
+    _timer =
+        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
   }
 
   void _setDayCounter(DocumentSnapshot data) {
     setState(() {
-      _days = data[DatabaseService.gameData]['streak'];
+      _days = data['streak'];
     });
   }
 
   void _setCountDown(DocumentSnapshot data) {
-    var countdown = data[DatabaseService.gameData]['NEXT_CLICK_AT'].toDate();
+    var countdown = data[NEXT_CLICK_AT].toDate();
     setState(() {
       _countDown = countdown;
     });
@@ -73,12 +74,13 @@ class _GamePageState extends State<GamePage> {
   Widget build(BuildContext context) {
     User _user = Provider.of<User>(context);
     // TODO can model be null at this point? e.g. the provider did not received values yet?
-    initFirestoreStreamForUser(_user.uuid, _onDataChanged);
+    initFirestoreGameDataStreamForUser(_user.uuid, _onDataChanged);
     Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => SecondPage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => SecondPage()));
       },
     );
 
@@ -133,7 +135,8 @@ class _GamePageState extends State<GamePage> {
         onLongPress: () {
           //TODO Just for testing
           getCurrentTime().then((now) {
-            _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
+            _db.updateTimestamp(
+                _user, Timestamp.fromDate(nextTimeToPress(now)));
           });
         },
         onPressed: () {
@@ -141,17 +144,14 @@ class _GamePageState extends State<GamePage> {
             if (pressedOnTime) {
               _db.incrementStreak(_user);
               getCurrentTime().then((now) {
-                _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
+                _db.updateTimestamp(
+                    _user, Timestamp.fromDate(nextTimeToPress(now)));
               });
               scheduleNotificationForUser(_user.uuid);
             } else {
-            _db.updateStreak(_user, 0);
+              _db.updateStreak(_user, 0);
             }
           });
-//          scheduleNotification(
-//              id++, _countDown.subtract(new Duration(hours: 1)));
-//          scheduleNotification(
-//              id++, _countDown.subtract(new Duration(minutes: 15)));
         });
 
     return Column(
