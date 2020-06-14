@@ -10,26 +10,17 @@ initFirestoreStreamForUser(String userId, Function onDataChanged) {
   });
 }
 
-updateTimeStamp(String collection, String document, Timestamp timestamp) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData({'nextClickAt': timestamp});
-}
+//updateTimeStamp(String collection, String document, Timestamp timestamp) {
+//  Firestore.instance.collection(collection).document(document).updateData({'nextClickAt': timestamp});
+//}
 
-incrementHitCounter(String collection, String document) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData(<String, dynamic>{'numberOfHit': FieldValue.increment(1)});
-}
-
-resetHitCounter(String collection, String document) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData({'numberOfHit': 0});
-}
+//incrementHitCounter(String collection, String document) {
+//  Firestore.instance.collection(collection).document(document).updateData(<String, dynamic>{'numberOfHit': FieldValue.increment(1)});
+//}
+//
+//resetHitCounter(String collection, String document) {
+//  Firestore.instance.collection(collection).document(document).updateData({'numberOfHit': 0});
+//}
 
 Future<http.Response> scheduleNotificationForUser(String userId) {
   return http.post(

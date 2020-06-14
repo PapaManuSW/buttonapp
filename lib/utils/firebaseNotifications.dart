@@ -42,7 +42,7 @@ class FirebaseNotifications {
   }
 
   void firebaseCloudMessaging_Listeners() {
-    if (Platform.isIOS) iOS_Permission();
+    if (Platform.isIOS) iosPermissions();
 
     _firebaseMessaging.getToken().then((token) {
       print(token);
@@ -61,7 +61,7 @@ class FirebaseNotifications {
     );
   }
 
-  void iOS_Permission() {
+  void iosPermissions() {
     _firebaseMessaging.requestNotificationPermissions(
         IosNotificationSettings(sound: true, badge: true, alert: true));
     _firebaseMessaging.onIosSettingsRegistered

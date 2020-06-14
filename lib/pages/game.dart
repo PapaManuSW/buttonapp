@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:button_app/models/user.dart';
 import 'package:button_app/secondary.dart';
-import 'package:button_app/services/auth.dart';
+import 'package:button_app/services/database.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +18,7 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
+  final DatabaseService _db = DatabaseService();
   // TODO fix initial values
   int _days = 25;
   double _progressPercentage = 0.7;
@@ -45,18 +46,17 @@ class _GamePageState extends State<GamePage> {
 
   void _initScheduledTask() {
     // TODO just to see it moving set to 1 second
-    _timer =
-        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
+    _timer = Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
   }
 
   void _setDayCounter(DocumentSnapshot data) {
     setState(() {
-      _days = data[NUMBER_OF_HITS];
+      _days = data[DatabaseService.gameData]['streak'];
     });
   }
 
   void _setCountDown(DocumentSnapshot data) {
-    var countdown = data[NEXT_CLICK_AT].toDate();
+    var countdown = data[DatabaseService.gameData]['NEXT_CLICK_AT'].toDate();
     setState(() {
       _countDown = countdown;
     });
@@ -71,15 +71,14 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    var model = Provider.of<User>(context);
+    User _user = Provider.of<User>(context);
     // TODO can model be null at this point? e.g. the provider did not received values yet?
-    initFirestoreStreamForUser(model.uuid, _onDataChanged);
+    initFirestoreStreamForUser(_user.uuid, _onDataChanged);
     Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SecondPage()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => SecondPage()));
       },
     );
 
@@ -134,21 +133,19 @@ class _GamePageState extends State<GamePage> {
         onLongPress: () {
           //TODO Just for testing
           getCurrentTime().then((now) {
-            updateTimeStamp(
-                COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
+            _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
           });
         },
         onPressed: () {
           verifyPressOnTime(_countDown).then((pressedOnTime) {
             if (pressedOnTime) {
-              incrementHitCounter(COLLECTION, USER);
+              _db.incrementStreak(_user);
               getCurrentTime().then((now) {
-                updateTimeStamp(
-                    COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
+                _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
               });
-              scheduleNotificationForUser(userId);
+              scheduleNotificationForUser(_user.uuid);
             } else {
-              resetHitCounter(COLLECTION, USER);
+            _db.updateStreak(_user, 0);
             }
           });
 //          scheduleNotification(
