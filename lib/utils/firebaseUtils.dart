@@ -5,11 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
 initFirestoreGameDataStreamForUser(String userId, Function onDataChanged) {
-  Firestore.instance
-      .collection(userId)
-      .document(DatabaseService.gameData)
-      .snapshots()
-      .listen((data) {
+  Firestore.instance.collection(userId).document(DatabaseService.gameData).snapshots().listen((data) {
     onDataChanged(data);
     return;
   });
