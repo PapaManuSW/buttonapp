@@ -27,6 +27,7 @@ dependencies:
   http:
   intl: ^0.16.1
   ntp: ^1.0.5
+  flutter_spinkit: ^2.1.0
   flutter:
     sdk: flutter
 

@@ -1,3 +1,4 @@
+import 'package:button_app/models/UIData.dart';
 import 'package:button_app/models/user.dart';
 import 'package:button_app/secondary.dart';
 import 'package:button_app/services/database.dart';
@@ -6,12 +7,10 @@ import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 
 import 'GameBloc.dart';
-
-const NEXT_CLICK_AT = 'nextClickAt';
-const STREAK = 'streak';
 
 class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
@@ -19,91 +18,30 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   final DatabaseService _db = DatabaseService();
-  final GameBloc gameBloc = GameBloc();
-  double _percentageRemainingTime;
-  String _countDownText = '';
-  int _streak = 0;
+  GameBloc gameBloc;
 
   @override
   void initState() {
     super.initState();
   }
 
-  void onTickText(text) {
-    setState(() {
-      _countDownText = text;
-    });
-  }
-
-  void onTickProgressCircle(percentage) {
-    setState(() {
-      _percentageRemainingTime = percentage;
-    });
-  }
-
   @override
   void dispose() {
-    gameBloc.stopCountDown();
+    //gameBloc.stopCountDown();
     super.dispose();
-  }
-
-  _onStreakChanged(streak) {
-    setState(() {
-      _streak = streak;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     User _user = Provider.of<User>(context);
-    // TODO can model be null at this point? e.g. the provider did not received values yet?
-    gameBloc.initFireStoreStream(_user.uuid, _onStreakChanged, onTickText, onTickProgressCircle);
+    gameBloc = GameBloc(_user.uuid);
+    //gameBloc.startCountDown();
     Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => SecondPage()));
       },
-    );
-
-    Widget numberOfDays = Stack(
-      children: <Widget>[
-        Text(
-          '$_streak',
-          style: Theme.of(context).textTheme.headline1,
-        ),
-        Positioned(
-          right: 0,
-          bottom: 5,
-          child: Text(
-            _streak == 0 ? 'Day' : 'Days',
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-        ),
-      ],
-    );
-
-    Widget countDownFinal = Stack(
-      children: <Widget>[
-        SizedBox(
-          child: CircularProgressIndicator(
-            strokeWidth: 10.0,
-            backgroundColor: Colors.transparent,
-            value: _percentageRemainingTime,
-          ),
-          height: 150.0,
-          width: 150.0,
-        ),
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.center,
-            child: Text(
-              _countDownText,
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ),
-        ),
-      ],
     );
 
     Widget mainButton = RaisedButton(
@@ -135,21 +73,82 @@ class _GamePageState extends State<GamePage> {
           });
         });
 
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[shareButton],
+    return StreamBuilder<UIData>(
+        stream: gameBloc.uiDataStream,
+        builder: (BuildContext context, AsyncSnapshot<UIData> uiData) {
+          if (uiData.hasData) {
+            return Column(children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[shareButton],
+              ),
+              _buildStreakWidget(context, uiData.data.streak),
+              SizedBox(height: 20),
+              _buildCountDown(uiData.data.percentageRemainingTime, uiData.data.remainingTimeText),
+              SizedBox(height: 50),
+              mainButton
+            ]);
+          } else {
+            return _buildLoadingWidget();
+          }
+        });
+  }
+
+  Widget _buildStreakWidget(BuildContext context, int streak) {
+    return Stack(
+      children: <Widget>[
+        Text(
+          '$streak',
+          style: Theme.of(context).textTheme.headline1,
+        ),
+        Positioned(
+          right: 0,
+          bottom: 5,
+          child: Text(
+            streak == 0 ? 'Day' : 'Days',
+            style: Theme.of(context).textTheme.bodyText1,
           ),
-          numberOfDays,
-          SizedBox(height: 20),
-          _countDownText == null ? Text("Loading") : countDownFinal,
-          SizedBox(height: 50),
-          mainButton,
-        ]);
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCountDown(percentageRemainingTime, countDownText) {
+    return Stack(
+      children: <Widget>[
+        SizedBox(
+          child: CircularProgressIndicator(
+            strokeWidth: 10.0,
+            backgroundColor: Colors.transparent,
+            value: percentageRemainingTime,
+          ),
+          height: 150.0,
+          width: 150.0,
+        ),
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              countDownText,
+              style: Theme.of(context).textTheme.headline4,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Column _buildLoadingWidget() {
+    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
+      SpinKitChasingDots(
+        color: Theme.of(context).iconTheme.color,
+        size: 50.0,
+      ),
+      Text(
+        "Just trying to find out what you did last time, hold on :)",
+        style: TextStyle(fontSize: 20, color: Colors.white),
+      )
+    ]);
   }
 }
