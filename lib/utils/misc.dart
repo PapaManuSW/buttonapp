@@ -1,27 +1,23 @@
-import 'package:ntp/ntp.dart';
-
 const int _nextTimeAbsoluteValueInMinutes = 60 * 24;
 
 DateTime nextTimeToPress(DateTime now) {
   return now.add(new Duration(minutes: _nextTimeAbsoluteValueInMinutes));
 }
 
-Future<double> computePercentage(DateTime lastTimestampOnServer) async {
+Future<int> computeRemainingTimeInSeconds(DateTime nextClickAt) async {
   DateTime now = await getCurrentTime();
-  int differenceInMinutes = lastTimestampOnServer.difference(now).inMinutes;
-  return differenceInMinutes / _nextTimeAbsoluteValueInMinutes;
+  int difference = nextClickAt.difference(now).inSeconds;
+  return difference;
 }
 
 Future<DateTime> getCurrentTime() async {
-  return NTP.now(); // Internet based
+  //return NTP.now(); // Internet based
   // return Timestamp.now();
-  // return DateTime.now();
+  return DateTime.now();
 }
 
-Future<bool> verifyPressOnTime(DateTime countDown) async {
-  DateTime now = await getCurrentTime();
+Future<bool> verifyPressOnTime(int differenceInMinutes) async {
   const int slack = 60; //minutes
-  var differenceInMinutes = countDown.difference(now).inMinutes;
   if (differenceInMinutes > slack) {
     print("Too early: " + differenceInMinutes.toString());
     return false;

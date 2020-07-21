@@ -7,7 +7,6 @@ import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 const NEXT_CLICK_AT = 'nextClickAt';
@@ -19,17 +18,19 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   final DatabaseService _db = DatabaseService();
+
   // TODO fix initial values
-  int _days = 25;
-  double _progressPercentage = 0.7;
-  DateTime _countDown = DateTime.now();
+  int _days;
+  double _countDownPercentage;
+  String _countDownText = '';
   Timer _timer;
-  int id = 0;
+  DocumentSnapshot _data;
+  int _differenceInSeconds;
 
   @override
   void initState() {
     super.initState();
-    _initScheduledTask();
+    _initCountDown();
   }
 
   @override
@@ -39,15 +40,33 @@ class _GamePageState extends State<GamePage> {
   }
 
   _onDataChanged(DocumentSnapshot data) {
-    _setCountDown(data);
-    _setPercentage();
+    _data = data;
     _setDayCounter(data);
+    _updateUI();
   }
 
-  void _initScheduledTask() {
-    // TODO just to see it moving set to 1 second
-    _timer =
-        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
+  void _initCountDown() {
+    _timer = Timer.periodic(Duration(seconds: 1), ((Timer t) {
+      _updateUI();
+    }));
+  }
+
+  Future _updateUI() async {
+    var countdown = _data[NEXT_CLICK_AT].toDate();
+    _differenceInSeconds = await computeRemainingTimeInSeconds(countdown);
+    _updateCircularCountDown(_differenceInSeconds);
+    _setCountDownText(_differenceInSeconds);
+  }
+
+  void _setCountDownText(int differenceInSeconds) {
+    var remainingTime = Duration(seconds: differenceInSeconds);
+    final List<String> parts = remainingTime.toString().split(":");
+    final String hour = parts[0].padLeft(2, '0');
+    final String minutes = parts[1].padLeft(2, '0');
+    final String seconds = parts[2].split(".")[0].padLeft(2, '0');
+    setState(() {
+      _countDownText = '$hour:$minutes:$seconds';
+    });
   }
 
   void _setDayCounter(DocumentSnapshot data) {
@@ -56,17 +75,11 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
-  void _setCountDown(DocumentSnapshot data) {
-    var countdown = data[NEXT_CLICK_AT].toDate();
+  Future<void> _updateCircularCountDown(int differenceInMinutes) async {
+    const secondsInOneDay = 60 * 60 * 24;
+    var percentage = differenceInMinutes / secondsInOneDay;
     setState(() {
-      _countDown = countdown;
-    });
-  }
-
-  Future<void> _setPercentage() async {
-    var percentage = await computePercentage(_countDown);
-    setState(() {
-      _progressPercentage = percentage;
+      _countDownPercentage = percentage;
     });
   }
 
@@ -79,8 +92,7 @@ class _GamePageState extends State<GamePage> {
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SecondPage()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => SecondPage()));
       },
     );
 
@@ -94,7 +106,7 @@ class _GamePageState extends State<GamePage> {
           right: 0,
           bottom: 5,
           child: Text(
-            'Days', // TODO: exception for 1 day
+            _days == 0 ? 'Day' : 'Days',
             style: Theme.of(context).textTheme.bodyText1,
           ),
         ),
@@ -107,7 +119,7 @@ class _GamePageState extends State<GamePage> {
           child: CircularProgressIndicator(
             strokeWidth: 10.0,
             backgroundColor: Colors.transparent,
-            value: _progressPercentage,
+            value: _countDownPercentage,
           ),
           height: 150.0,
           width: 150.0,
@@ -116,7 +128,8 @@ class _GamePageState extends State<GamePage> {
           child: Align(
             alignment: Alignment.center,
             child: Text(
-              DateFormat('kk:mm:ss').format(_countDown),
+              _countDownText,
+              //DateFormat('kk:mm:ss').format(_countDown),
               style: Theme.of(context).textTheme.headline4,
             ),
           ),
@@ -135,19 +148,19 @@ class _GamePageState extends State<GamePage> {
         onLongPress: () {
           //TODO Just for testing
           getCurrentTime().then((now) {
-            _db.updateTimestamp(
-                _user, Timestamp.fromDate(nextTimeToPress(now)));
+            _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
+            scheduleNotificationForUser(_user.uuid);
           });
         },
         onPressed: () {
-          verifyPressOnTime(_countDown).then((pressedOnTime) {
+          verifyPressOnTime(_differenceInSeconds).then((pressedOnTime) {
             if (pressedOnTime) {
               _db.incrementStreak(_user);
               getCurrentTime().then((now) {
-                _db.updateTimestamp(
-                    _user, Timestamp.fromDate(nextTimeToPress(now)));
+                _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
               });
               scheduleNotificationForUser(_user.uuid);
+              // todo delete all schedule notifications?
             } else {
               _db.updateStreak(_user, 0);
             }
