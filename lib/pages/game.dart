@@ -1,114 +1,127 @@
-import 'dart:async';
-
+import 'package:button_app/models/UIData.dart';
+import 'package:button_app/models/user.dart';
 import 'package:button_app/secondary.dart';
-import 'package:button_app/utils/firebaseNotifications.dart';
+import 'package:button_app/services/database.dart';
 import 'package:button_app/utils/firebaseUtils.dart';
 import 'package:button_app/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:provider/provider.dart';
 
-const String COLLECTION = 'users';
-const String USER = 'ale'; //TODO use user model and get it from sign-in
-const NEXT_CLICK_AT = 'nextClickAt';
-const NUMBER_OF_HITS = 'numberOfHit';
+import 'GameBloc.dart';
 
 class GamePage extends StatefulWidget {
   _GamePageState createState() => _GamePageState();
 }
 
 class _GamePageState extends State<GamePage> {
-  // TODO fix initial values
-  int _days = 25;
-  double _progressPercentage = 0.7;
-  DateTime _countDown = DateTime.now();
-  Timer _timer;
-  int id = 0;
+  final DatabaseService _db = DatabaseService();
+  GameBloc gameBloc;
 
   @override
   void initState() {
     super.initState();
-    new FirebaseNotifications().setUpFirebase();
-    _initScheduledTask();
-    initFirestoreStreamForUser(COLLECTION, _onDataChanged, USER);
-    getCurrentTime().then((time) {
-      print(time.toIso8601String());
-    });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    //gameBloc.stopCountDown();
     super.dispose();
-  }
-
-  _onDataChanged(DocumentSnapshot data) {
-    _setCountDown(data);
-    _setPercentage();
-    _setDayCounter(data);
-  }
-
-  void _initScheduledTask() {
-    // TODO just to see it moving set to 1 second
-    _timer =
-        Timer.periodic(Duration(minutes: 5), (Timer t) => _setPercentage());
-  }
-
-  void _setDayCounter(DocumentSnapshot data) {
-    setState(() {
-      _days = data[NUMBER_OF_HITS];
-    });
-  }
-
-  void _setCountDown(DocumentSnapshot data) {
-    var countdown = data[NEXT_CLICK_AT].toDate();
-    setState(() {
-      _countDown = countdown;
-    });
-  }
-
-  Future<void> _setPercentage() async {
-    var percentage = await computePercentage(_countDown);
-    setState(() {
-      _progressPercentage = percentage;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    User _user = Provider.of<User>(context);
+    gameBloc = GameBloc(_user.uuid);
+    //gameBloc.startCountDown();
     Widget shareButton = IconButton(
       icon: Icon(Icons.share),
       color: Theme.of(context).iconTheme.color,
       onPressed: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SecondPage()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => SecondPage()));
       },
     );
 
-    Widget numberOfDays = Stack(
+    Widget mainButton = RaisedButton(
+        color: Theme.of(context).primaryColor,
+        splashColor: Colors.cyanAccent,
+        child: Text(
+          'Press me',
+          style: Theme.of(context).textTheme.button,
+        ),
+        onLongPress: () {
+          //TODO Just for testing
+          getCurrentTime().then((now) {
+            _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
+            scheduleNotificationForUser(_user.uuid);
+          });
+        },
+        onPressed: () {
+          verifyPressOnTime(gameBloc.differenceInSeconds).then((pressedOnTime) {
+            if (pressedOnTime) {
+              _db.incrementStreak(_user);
+              getCurrentTime().then((now) {
+                _db.updateTimestamp(_user, Timestamp.fromDate(nextTimeToPress(now)));
+              });
+              scheduleNotificationForUser(_user.uuid);
+              // todo delete all schedule notifications?
+            } else {
+              _db.updateStreak(_user, 0);
+            }
+          });
+        });
+
+    return StreamBuilder<UIData>(
+        stream: gameBloc.uiDataStream,
+        builder: (BuildContext context, AsyncSnapshot<UIData> uiData) {
+          if (uiData.hasData) {
+            return Column(children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[shareButton],
+              ),
+              _buildStreakWidget(context, uiData.data.streak),
+              SizedBox(height: 20),
+              _buildCountDown(uiData.data.percentageRemainingTime, uiData.data.remainingTimeText),
+              SizedBox(height: 50),
+              mainButton
+            ]);
+          } else {
+            return _buildLoadingWidget();
+          }
+        });
+  }
+
+  Widget _buildStreakWidget(BuildContext context, int streak) {
+    return Stack(
       children: <Widget>[
         Text(
-          '$_days',
+          '$streak',
           style: Theme.of(context).textTheme.headline1,
         ),
         Positioned(
           right: 0,
           bottom: 5,
           child: Text(
-            'Days', // TODO: exception for 1 day
+            streak == 0 ? 'Day' : 'Days',
             style: Theme.of(context).textTheme.bodyText1,
           ),
         ),
       ],
     );
+  }
 
-    Widget countDownFinal = Stack(
+  Widget _buildCountDown(percentageRemainingTime, countDownText) {
+    return Stack(
       children: <Widget>[
         SizedBox(
           child: CircularProgressIndicator(
             strokeWidth: 10.0,
             backgroundColor: Colors.transparent,
-            value: _progressPercentage,
+            value: percentageRemainingTime,
           ),
           height: 150.0,
           width: 150.0,
@@ -117,63 +130,25 @@ class _GamePageState extends State<GamePage> {
           child: Align(
             alignment: Alignment.center,
             child: Text(
-              DateFormat('kk:mm:ss').format(_countDown),
+              countDownText,
               style: Theme.of(context).textTheme.headline4,
             ),
           ),
         ),
       ],
     );
+  }
 
-    Widget mainButton = RaisedButton(
-        color: Theme.of(context).primaryColor,
-//        textColor: Theme.of(context).textTheme.button.color,
-        splashColor: Colors.cyanAccent,
-        child: Text(
-          'Button',
-          style: Theme.of(context).textTheme.button,
-        ),
-        onLongPress: () {
-          //TODO Just for testing
-          getCurrentTime().then((now) {
-            updateTimeStamp(
-                COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
-          });
-        },
-        onPressed: () {
-          verifyPressOnTime(_countDown).then((pressedOnTime) {
-            if (pressedOnTime) {
-              incrementHitCounter(COLLECTION, USER);
-              getCurrentTime().then((now) {
-                updateTimeStamp(
-                    COLLECTION, USER, Timestamp.fromDate(nextTimeToPress(now)));
-              });
-            } else {
-              resetHitCounter(COLLECTION, USER);
-            }
-          });
-//          scheduleNotification(
-//              id++, _countDown.subtract(new Duration(hours: 1)));
-//          scheduleNotification(
-//              id++, _countDown.subtract(new Duration(minutes: 15)));
-        });
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[shareButton],
-        ),
-        numberOfDays,
-        SizedBox(height: 20),
-        countDownFinal,
-        SizedBox(height: 50),
-        mainButton,
-      ],
-    );
+  Column _buildLoadingWidget() {
+    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
+      SpinKitChasingDots(
+        color: Theme.of(context).iconTheme.color,
+        size: 50.0,
+      ),
+      Text(
+        "Just trying to find out what you did last time, hold on :)",
+        style: TextStyle(fontSize: 20, color: Colors.white),
+      )
+    ]);
   }
 }

@@ -1,51 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 
-initFirestoreStreamForUser(
-    String collection, Function onDataChanged, String userId) {
-  Firestore.instance.collection(collection).snapshots().listen((data) {
-    data.documents.forEach((element) {
-      if (element.documentID.compareTo(userId) == 0) {
-        onDataChanged(element);
-        return;
-      }
-    });
+import 'package:button_app/services/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+
+initFirestoreGameDataStreamForUser(String userId, Function onDataChanged) {
+  Firestore.instance.collection(userId).document(DatabaseService.gameData).snapshots().listen((data) {
+    onDataChanged(data);
+    return;
   });
 }
 
-updateTimeStamp(String collection, String document, Timestamp timestamp) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData({'nextClickAt': timestamp});
-}
+//updateTimeStamp(String collection, String document, Timestamp timestamp) {
+//  Firestore.instance.collection(collection).document(document).updateData({'nextClickAt': timestamp});
+//}
 
-incrementHitCounter(String collection, String document) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData(<String, dynamic>{'numberOfHit': FieldValue.increment(1)});
-}
+//incrementHitCounter(String collection, String document) {
+//  Firestore.instance.collection(collection).document(document).updateData(<String, dynamic>{'numberOfHit': FieldValue.increment(1)});
+//}
+//
+//resetHitCounter(String collection, String document) {
+//  Firestore.instance.collection(collection).document(document).updateData({'numberOfHit': 0});
+//}
 
-resetHitCounter(String collection, String document) {
-  Firestore.instance
-      .collection(collection)
-      .document(document)
-      .updateData({'numberOfHit': 0});
-}
-
-// TODO not used
-StreamBuilder<QuerySnapshot> fetchFromFireStore() {
-  return StreamBuilder<QuerySnapshot>(
-    stream: Firestore.instance.collection('users').snapshots(),
-    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-      if (snapshot.hasError) return new Text('Error: ${snapshot.error}');
-      switch (snapshot.connectionState) {
-        case ConnectionState.waiting:
-          return new Text('Loading...');
-        default:
-          return new Text("...");
-      }
+Future<http.Response> scheduleNotificationForUser(String userId) {
+  print("Scheduling notification");
+  return http.post(
+    'https://europe-west1-api-5485359515497309438-439551.cloudfunctions.net/scheduleTaskToSendNotification',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
     },
+    body: jsonEncode(<String, String>{
+      'userId': userId,
+    }),
   );
 }
